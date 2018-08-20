@@ -21,11 +21,12 @@ public class TimedKeyValueCacheTest {
     private TimedKeyValueCache<String, String> cache;
     private TimedKeyValueCache<String, String> cacheWithConsumers;
 
+    @SuppressWarnings({"resource", "IOResourceOpenedButNotSafelyClosed", "ImplicitDefaultCharsetUsage"})
     private final PrintStream original = new PrintStream(System.out);
     private final List<String> consumerMessages = new LinkedList<>();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         consumerMessages.clear();
         KeyValueCacheEventConsumers<String, String> consumers =
                 new KeyValueCacheEventConsumers<>(
@@ -42,6 +43,12 @@ public class TimedKeyValueCacheTest {
         );
     }
 
+    @After
+    public void tearDown() throws InterruptedException {
+        cache.shutdown(0);
+        System.setOut(original);
+    }
+
     @Test(expected = NullPointerException.class)
     @SuppressWarnings("all")
     public void timeUnitGivenToConstructorCanNotBeNull() {
@@ -55,13 +62,13 @@ public class TimedKeyValueCacheTest {
     }
 
     @Test
-    public void anItemAddedIsImmediatelyRetrievable() throws Exception {
+    public void anItemAddedIsImmediatelyRetrievable() {
         cache.add("key", "value", 200);
         assertTrue(cache.get("key").isPresent());
     }
 
     @Test
-    public void anItemAddedIsRemovedAfterItsExpiry() throws Exception {
+    public void anItemAddedIsRemovedAfterItsExpiry() throws InterruptedException {
         cache.add("key", "value", 1);
         Thread.sleep(10);
         assertFalse(cache.containsKey("key"));
@@ -69,7 +76,7 @@ public class TimedKeyValueCacheTest {
     }
 
     @Test
-    public void addingTheSameValueMultipleTimesPreservesLastTTL() throws Exception {
+    public void addingTheSameValueMultipleTimesPreservesLastTTL() throws InterruptedException {
         cache.add("key", "value", 1);
         cache.add("key", "value", 1);
         cache.add("key", "value", 50);
@@ -78,7 +85,7 @@ public class TimedKeyValueCacheTest {
     }
 
     @Test
-    public void addingTheSameValueMultipleTimesPreservesLastTTLEvenIfLower() throws Exception {
+    public void addingTheSameValueMultipleTimesPreservesLastTTLEvenIfLower() throws InterruptedException {
         cache.add("key", "value", 50);
         cache.add("key", "value", 1);
         Thread.sleep(10);
@@ -99,32 +106,32 @@ public class TimedKeyValueCacheTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void callingAddOnShutdownCacheThrows() throws Exception {
+    public void callingAddOnShutdownCacheThrows() throws InterruptedException {
         cache.shutdown(0);
         cache.add("key", "value", 1);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void callingGetOnShutdownCacheThrows() throws Exception {
+    public void callingGetOnShutdownCacheThrows() throws InterruptedException {
         cache.shutdown(0);
         cache.get("key");
     }
 
     @Test(expected = IllegalStateException.class)
-    public void callingContainsKeyOnShutdownCacheThrows() throws Exception {
+    public void callingContainsKeyOnShutdownCacheThrows() throws InterruptedException {
         cache.shutdown(0);
         cache.containsKey("key");
     }
 
     @Test
-    public void shuttingDownWhenNotEmptyShouldWork() throws Exception {
+    public void shuttingDownWhenNotEmptyShouldWork() throws InterruptedException {
         cacheWithConsumers.add("key", "value", 500000);
         cacheWithConsumers.shutdown(0);
         assertTrue(true);
     }
 
     @Test
-    public void cacheEvictionDuringShutdownShouldNotCauseErrors() throws Exception {
+    public void cacheEvictionDuringShutdownShouldNotCauseErrors() throws InterruptedException {
         cacheWithConsumers.add("key", "value", 10);
         cacheWithConsumers.shutdown(0);
         Thread.sleep(100);
@@ -132,13 +139,13 @@ public class TimedKeyValueCacheTest {
     }
 
     @Test
-    public void addingAnItemToTheCacheNotifiesConsumer() throws Exception {
+    public void addingAnItemToTheCacheNotifiesConsumer() {
         cacheWithConsumers.add("key", "value", 5);
         assertTrue(consumerMessages.contains(ENTRY_ADDED));
     }
 
     @Test
-    public void updatingAnItemToTheCacheNotifiesConsumerAgain() throws Exception {
+    public void updatingAnItemToTheCacheNotifiesConsumerAgain() {
         cacheWithConsumers.add("key", "value", 5);
         cacheWithConsumers.add("key", "another value", 5);
         String[] expecteds = new String[] {ENTRY_ADDED, ENTRY_ADDED};
@@ -146,28 +153,22 @@ public class TimedKeyValueCacheTest {
     }
 
     @Test
-    public void anEvictedItemNotifiesConsumer() throws Exception {
+    public void anEvictedItemNotifiesConsumer() throws InterruptedException {
         cacheWithConsumers.add("key", "value", 1);
         Thread.sleep(20);
         assertTrue(consumerMessages.contains(ENTRY_EVICTED));
     }
 
     @Test
-    public void retrievingAnItemNotifiesConsumer() throws Exception {
+    public void retrievingAnItemNotifiesConsumer() {
         cacheWithConsumers.add("key", "value", 10);
         cacheWithConsumers.get("key");
         assertTrue(consumerMessages.contains(ENTRY_RETRIEVED));
     }
 
     @Test
-    public void cacheMissNotifiesConsumer() throws Exception {
+    public void cacheMissNotifiesConsumer() {
         cacheWithConsumers.get("key");
         assertTrue(consumerMessages.contains(CACHE_MISS));
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        cache.shutdown(0);
-        System.setOut(original);
     }
 }
