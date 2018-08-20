@@ -70,7 +70,7 @@ public class TimedKeyValueCacheTest {
     @Test
     public void anItemAddedIsRemovedAfterItsExpiry() throws InterruptedException {
         cache.add("key", "value", 1);
-        Thread.sleep(10);
+        Thread.sleep(30);
         assertFalse(cache.containsKey("key"));
         assertFalse(cache.get("key").isPresent());
     }
@@ -80,7 +80,7 @@ public class TimedKeyValueCacheTest {
         cache.add("key", "value", 1);
         cache.add("key", "value", 1);
         cache.add("key", "value", 50);
-        Thread.sleep(10);
+        Thread.sleep(30);
         assertTrue(cache.containsKey("key"));
     }
 
@@ -88,7 +88,7 @@ public class TimedKeyValueCacheTest {
     public void addingTheSameValueMultipleTimesPreservesLastTTLEvenIfLower() throws InterruptedException {
         cache.add("key", "value", 50);
         cache.add("key", "value", 1);
-        Thread.sleep(10);
+        Thread.sleep(30);
         assertFalse(cache.containsKey("key"));
     }
 
