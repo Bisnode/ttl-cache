@@ -13,5 +13,4 @@ addons:
   sonarcloud:
     organization: "bisnode"
 script:
-  - build
   - sonar-scanner
