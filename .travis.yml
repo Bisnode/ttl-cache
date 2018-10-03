@@ -8,3 +8,9 @@ cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
+
+addons:
+  sonarcloud:
+    organization: "bisnode"
+script:
+  - sonar-scanner
