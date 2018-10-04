@@ -1,6 +1,7 @@
 # ttl-cache
 
 [![Build Status](https://travis-ci.com/Bisnode/ttl-cache.svg?branch=master)](https://travis-ci.com/Bisnode/ttl-cache)
+![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=ttl-cache&metric=alert_status)
 
 A resource effective cache implementation where any entry's lifetime is kept track of separately and evicted when it's 
 time-to-live reaches zero. Ideal for storing objects where lifetime differs per object such as tokens.
